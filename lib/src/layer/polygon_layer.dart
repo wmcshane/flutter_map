@@ -99,11 +99,29 @@ class PolygonPainter extends CustomPainter {
       ..strokeWidth = polygonOpt.borderStrokeWidth)
         : null;
 
-    _paintPolygon(canvas, polygonOpt.offsets, paint);
+    List<List<Offset>> rings = new List();
+    Offset ringStart = polygonOpt.offsets[0];
+    int slidingWindow = 0;
+    for(int i = 1; i < polygonOpt.offsets.length-1; i++){
+      Offset cur = polygonOpt.offsets[i];
+      if(ringStart == cur){
+        //found the ring start, this is the end of the first polygon
+        rings.add(polygonOpt.offsets.sublist(slidingWindow, i+1));
+        slidingWindow = i + 3;
+        if(slidingWindow < polygonOpt.offsets.length-1) {
+          i = slidingWindow;
+          ringStart = polygonOpt.offsets[slidingWindow];
+        }
+      }
+    }
+
+    _paintPolygon(canvas, rings, paint);
 
     double borderRadius = (polygonOpt.borderStrokeWidth / 2);
     if (polygonOpt.borderStrokeWidth > 0.0) {
-        _paintLine(canvas, polygonOpt.offsets, borderRadius, borderPaint);
+      for(List<Offset> ring in rings) {
+        _paintLine(canvas, ring, borderRadius, borderPaint);
+      }
     }
   }
 
@@ -114,9 +132,11 @@ class PolygonPainter extends CustomPainter {
     }
   }
 
-  void _paintPolygon(Canvas canvas, List<Offset> offsets, Paint paint) {
+  void _paintPolygon(Canvas canvas, List<List<Offset>> polygons, Paint paint) {
     Path path = new Path();
-    path.addPolygon(offsets, true);
+    for(List<Offset> ring in polygons) {
+      path.addPolygon(ring, true);
+    }
     canvas.drawPath(path, paint);
   }
 
