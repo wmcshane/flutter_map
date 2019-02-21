@@ -42,6 +42,10 @@ class TileLayerOptions extends LayerOptions {
   final bool zoomReverse;
   final double zoomOffset;
 
+  /// number of offscreen tile columns/rows to render,
+  /// n tile rows top and bottom and n tile columns left and right.
+  final int offScreenTileBuffer;
+
   ///List of subdomains for the URL.
   ///
   ///Example:
@@ -103,6 +107,7 @@ class TileLayerOptions extends LayerOptions {
       this.maxZoom = 18.0,
       this.zoomReverse = false,
       this.zoomOffset = 0.0,
+      this.offScreenTileBuffer = 0,
       this.additionalOptions = const <String, String>{},
       this.subdomains = const <String>[],
       this.keepBuffer = 2,
@@ -416,9 +421,11 @@ class _TileLayerState extends State<TileLayer> {
 
   Bounds _pxBoundsToTileRange(Bounds bounds) {
     var tileSize = this.getTileSize();
+    var halfTileSize = tileSize/2;
+    CustomPoint tileBuffer = CustomPoint(this.options.offScreenTileBuffer, this.options.offScreenTileBuffer);
     return new Bounds(
-      bounds.min.unscaleBy(tileSize).floor(),
-      bounds.max.unscaleBy(tileSize).ceil() - new CustomPoint(1, 1),
+      (bounds.min - halfTileSize).unscaleBy(tileSize).floor() - tileBuffer,
+      (bounds.max + halfTileSize).unscaleBy(tileSize).floor() + tileBuffer,
     );
   }
 
