@@ -229,6 +229,8 @@ class PolygonLayer extends StatelessWidget {
           );
         }
 
+        print('Drawing ${polygons.length} Polygons');
+
         return new Container(
           child: new Stack(
             children: polygons,
