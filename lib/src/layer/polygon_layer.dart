@@ -203,8 +203,6 @@ class PolygonLayer extends StatelessWidget {
   }
 }
 
-
-
 /// Sutherland-Hodgman polygon clipping
 /// https://rosettacode.org/wiki/Sutherland-Hodgman_polygon_clipping#Java
 List<LatLng> clipPolygon(List<LatLng> subjectPolygon, List<LatLng> clipPolygon) {
@@ -250,8 +248,6 @@ List<LatLng> clipPolygon(List<LatLng> subjectPolygon, List<LatLng> clipPolygon) 
   return outputList;
 }
 
-// lon = x = 0
-// lat = y = 1
 bool isInside(LatLng a, LatLng b, LatLng c) {
   return (a.longitude - c.longitude) * (b.latitude - c.latitude) > (a.latitude - c.latitude) * (b.longitude - c.longitude);
 }
@@ -271,79 +267,6 @@ LatLng intersection(LatLng a, LatLng b, LatLng p, LatLng q) {
 
   return new LatLng(y, x); // TODO: was x, y
 }
-
-
-
-
-
-
-//void clipPolygon(List<LatLng> subjectPolygon, List<LatLng> clipPolygon){
-//  List<LatLng> outputList = subjectPolygon;
-//
-//  // loop each edge
-//  for(int i = 0; i < clipPolygon.length; i++)
-//  {
-//    List<LatLng> inputList = List.from(outputList);
-//    outputList.clear();
-//
-//    // loop all points
-//    for(int i = 0 ; i < inputList.length ; i ++)
-//    {
-//      LatLng current_point = inputList[i];
-//      LatLng prev_point = inputList[((i % inputList.length) + inputList.length) % inputList.length];
-//      LatLng Intersecting_point = ComputeIntersection(prev_point,current_point,clipEdge);
-//    }
-//  }
-//}
-//
-//LatLng ComputeIntersection (s, e, cp1, cp2) {
-//  var dc = [ cp1[0] - cp2[0], cp1[1] - cp2[1] ],
-//      dp = [ s[0] - e[0], s[1] - e[1] ],
-//      n1 = cp1[0] * cp2[1] - cp1[1] * cp2[0],
-//      n2 = s[0] * e[1] - s[1] * e[0],
-//      n3 = 1.0 / (dc[0] * dp[1] - dc[1] * dp[0]);
-//  return LatLng((n1*dp[1] - n2*dc[1]) * n3, (n1*dp[0] - n2*dc[0]) * n3);
-//}
-
-//bool inside (p, cp1, cp2) {
-//  return (cp2[0]-cp1[0])*(p[1]-cp1[1]) > (cp2[1]-cp1[1])*(p[0]-cp1[0]);
-//}
-//
-//LatLng intersection (s, e, cp1, cp2) {
-//  var dc = [ cp1[0] - cp2[0], cp1[1] - cp2[1] ],
-//      dp = [ s[0] - e[0], s[1] - e[1] ],
-//      n1 = cp1[0] * cp2[1] - cp1[1] * cp2[0],
-//      n2 = s[0] * e[1] - s[1] * e[0],
-//      n3 = 1.0 / (dc[0] * dp[1] - dc[1] * dp[0]);
-//  return LatLng((n1*dp[1] - n2*dc[1]) * n3, (n1*dp[0] - n2*dc[0]) * n3);
-//}
-//
-//List<LatLng> clipPolygon (Polygon subjectPolygon, Polygon clipPolygon) {
-//  LatLng cp1, cp2, s, e;
-//  var outputList = subjectPolygon.points;
-//  cp1 = clipPolygon.points[clipPolygon.points.length-1];
-//  for (LatLng j in clipPolygon.points) {
-//    var cp2 = clipPolygon.points[clipPolygon.points.indexOf(j)];
-//    var inputList = outputList;
-//    outputList = List();
-//    s = inputList[inputList.length - 1]; //last on the input list
-//    for (LatLng i in inputList) {
-//      var e = inputList[inputList.indexOf(i)];
-//      if (inside(e, cp1, cp2)) {
-//        if (!inside(s, cp1, cp2)) {
-//          outputList.add(intersection(s, e, cp1, cp2));
-//        }
-//        outputList.add(e);
-//      }
-//      else if (inside(s, cp1, cp2)) {
-//        outputList.add(intersection(s, e, cp1, cp2));
-//      }
-//      s = e;
-//    }
-//    cp1 = cp2;
-//  }
-//  return outputList;
-//}
 
 class PolygonPainter extends CustomPainter {
   final Polygon polygonOpt;
