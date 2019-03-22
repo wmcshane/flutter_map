@@ -39,8 +39,8 @@ class Polygon {
     for(LatLng point in points)
     {
       // convert lat lon to custom point stored as radians
-      num x = point.longitude * Math.pi / 180.0;
-      num y = point.latitude * Math.pi / 180.0;
+      num x = ((point.longitude * Math.pi / 180.0) * 100000000).toInt();
+      num y = ((point.latitude * Math.pi / 180.0) * 100000000).toInt();
       CustomPoint cPoint = CustomPoint(x, y);
 
       if(minX == null || minX > cPoint.x)
@@ -89,8 +89,8 @@ class BoundingBox
   BoundingBox getAsRadians()
   {
     BoundingBox radiansBB = BoundingBox (
-      min: Math.Point(this.min.x * Math.pi / 180.0, this.min.y * Math.pi / 180.0),
-      max: Math.Point(this.max.x * Math.pi / 180.0, this.max.y * Math.pi / 180.0),
+      min: Math.Point( ((this.min.x * Math.pi / 180.0)* 100000000).toInt(), ((this.min.y * Math.pi / 180.0) * 100000000).toInt()),
+      max: Math.Point( ((this.max.x * Math.pi / 180.0)* 100000000).toInt(), ((this.max.y * Math.pi / 180.0) * 100000000).toInt()),
     );
 
     return radiansBB;
@@ -151,6 +151,12 @@ class PolygonLayer extends StatelessWidget {
 //          var maxPos = map.project(maxBound);
 //          maxPos = maxPos.multiplyBy(map.getZoomScale(map.zoom, map.zoom)) - map.getPixelOrigin();
 
+
+          if(map.zoom >= 10.0){
+            print('S: ${screenBBRadians}');
+            print('P: ${polygonOpt.boundingBox}');
+          }
+
           // only draw polygons that overlap with the screens bounding box
           if(!polygonOpt.boundingBox.isOverlapping(screenBBRadians))
           {
@@ -182,7 +188,7 @@ class PolygonLayer extends StatelessWidget {
           );
         }
 
-        //print('Drawing ${polygons.length} Polygons');
+        print('Drawing ${polygons.length} Polygons');
 
         return new Container(
           child: new Stack(
