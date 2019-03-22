@@ -164,6 +164,9 @@ class PolygonLayer extends StatelessWidget {
 //          List<LatLng> clippedPolygon = clipPolygon(polygonOpt, screenPoly);
 //          polygonOpt = Polygon(points: clippedPolygon, borderStrokeWidth: polygonOpt.borderStrokeWidth, borderColor: polygonOpt.borderColor, color: polygonOpt.color);
 
+          List<LatLng> clippedPoly = clipPolygon(polygonOpt.points, [screenBounds.northWest, screenBounds.southWest, screenBounds.southEast, screenBounds.northEast]);
+          polygonOpt = Polygon(points: clippedPoly, color: polygonOpt.color, borderColor: polygonOpt.borderColor, borderStrokeWidth: polygonOpt.borderStrokeWidth);
+
           // print('\nScreen: $screenBounds');
           // print('min: $minPos | max: $maxPos');
           // print ('min: $minBound | max: $maxBound');
@@ -199,6 +202,108 @@ class PolygonLayer extends StatelessWidget {
     );
   }
 }
+
+
+
+/// Sutherland-Hodgman polygon clipping
+/// https://rosettacode.org/wiki/Sutherland-Hodgman_polygon_clipping#Java
+List<LatLng> clipPolygon(List<LatLng> subjectPolygon, List<LatLng> clipPolygon) {
+  List<LatLng> outputList = List.from(subjectPolygon); // TODO: may need list.from
+
+  // remove linking point
+  if(outputList != null && outputList.isNotEmpty){
+    outputList.removeAt(outputList.length-1);
+  }
+
+  int len = clipPolygon.length;
+  for (int i = 0; i < len; i++) {
+    int len2 = outputList.length;
+    List<LatLng> inputList = List.from(outputList);
+    outputList = new List(); // TODO: may be faster with .clear or making it a fixed list
+
+    LatLng A = clipPolygon[((i + len - 1) % len)];
+    A = LatLng(A.latitude, A.longitude);
+    LatLng B = clipPolygon[(i)];
+    B = LatLng(B.latitude, B.longitude);
+
+    for (int j = 0; j < len2; j++) {
+
+      LatLng P = inputList[((j + len2 - 1) % len2)];
+      LatLng Q = inputList[(j)];
+
+      if (isInside(A, B, Q)) {
+        if (!isInside(A, B, P))
+          outputList.add(intersection(A, B, P, Q));
+        outputList.add(Q);
+      } else if (isInside(A, B, P))
+        outputList.add(intersection(A, B, P, Q));
+    }
+
+    print(outputList);
+  }
+
+  // re add linking point
+  if (outputList != null && outputList.isNotEmpty) {
+    outputList.add(outputList[0]);
+  }
+
+  return outputList;
+}
+
+// lon = x = 0
+// lat = y = 1
+bool isInside(LatLng a, LatLng b, LatLng c) {
+  return (a.longitude - c.longitude) * (b.latitude - c.latitude) > (a.latitude - c.latitude) * (b.longitude - c.longitude);
+}
+
+LatLng intersection(LatLng a, LatLng b, LatLng p, LatLng q) {
+  double A1 = b.latitude - a.latitude;
+  double B1 = a.longitude - b.longitude;
+  double C1 = A1 * a.longitude + B1 * a.latitude;
+
+  double A2 = q.latitude - p.latitude;
+  double B2 = p.longitude - q.longitude;
+  double C2 = A2 * p.longitude + B2 * p.latitude;
+
+  double det = A1 * B2 - A2 * B1;
+  double x = (B2 * C1 - B1 * C2) / det;
+  double y = (A1 * C2 - A2 * C1) / det;
+
+  return new LatLng(y, x); // TODO: was x, y
+}
+
+
+
+
+
+
+//void clipPolygon(List<LatLng> subjectPolygon, List<LatLng> clipPolygon){
+//  List<LatLng> outputList = subjectPolygon;
+//
+//  // loop each edge
+//  for(int i = 0; i < clipPolygon.length; i++)
+//  {
+//    List<LatLng> inputList = List.from(outputList);
+//    outputList.clear();
+//
+//    // loop all points
+//    for(int i = 0 ; i < inputList.length ; i ++)
+//    {
+//      LatLng current_point = inputList[i];
+//      LatLng prev_point = inputList[((i % inputList.length) + inputList.length) % inputList.length];
+//      LatLng Intersecting_point = ComputeIntersection(prev_point,current_point,clipEdge);
+//    }
+//  }
+//}
+//
+//LatLng ComputeIntersection (s, e, cp1, cp2) {
+//  var dc = [ cp1[0] - cp2[0], cp1[1] - cp2[1] ],
+//      dp = [ s[0] - e[0], s[1] - e[1] ],
+//      n1 = cp1[0] * cp2[1] - cp1[1] * cp2[0],
+//      n2 = s[0] * e[1] - s[1] * e[0],
+//      n3 = 1.0 / (dc[0] * dp[1] - dc[1] * dp[0]);
+//  return LatLng((n1*dp[1] - n2*dc[1]) * n3, (n1*dp[0] - n2*dc[0]) * n3);
+//}
 
 //bool inside (p, cp1, cp2) {
 //  return (cp2[0]-cp1[0])*(p[1]-cp1[1]) > (cp2[1]-cp1[1])*(p[0]-cp1[0]);
