@@ -39,8 +39,8 @@ class Polygon {
     for(LatLng point in points)
     {
       // convert lat lon to custom point stored as radians
-      num x = ((point.longitude * Math.pi / 180.0) * 100000000).toInt();
-      num y = ((point.latitude * Math.pi / 180.0) * 100000000).toInt();
+      num x = point.longitude * Math.pi / 180.0;
+      num y = point.latitude * Math.pi / 180.0;
       CustomPoint cPoint = CustomPoint(x, y);
 
       if(minX == null || minX > cPoint.x)
@@ -89,8 +89,8 @@ class BoundingBox
   BoundingBox getAsRadians()
   {
     BoundingBox radiansBB = BoundingBox (
-      min: Math.Point( ((this.min.x * Math.pi / 180.0)* 100000000).toInt(), ((this.min.y * Math.pi / 180.0) * 100000000).toInt()),
-      max: Math.Point( ((this.max.x * Math.pi / 180.0)* 100000000).toInt(), ((this.max.y * Math.pi / 180.0) * 100000000).toInt()),
+      min: Math.Point(this.min.x * Math.pi / 180.0, this.min.y * Math.pi / 180.0),
+      max: Math.Point(this.max.x * Math.pi / 180.0, this.max.y * Math.pi / 180.0),
     );
 
     return radiansBB;
@@ -137,6 +137,7 @@ class PolygonLayer extends StatelessWidget {
 
         var polygons = <Widget>[];
         LatLngBounds screenBounds = map.bounds;
+        //Polygon screenPoly = Polygon(points: [screenBounds.southWest, screenBounds.southEast, screenBounds.northWest, screenBounds.northEast]);
         BoundingBox screenBBRadians = BoundingBox(min: Math.Point(screenBounds.west, screenBounds.south), max: Math.Point(screenBounds.east, screenBounds.north)).getAsRadians();
         for (var polygonOpt in polygonOpts.polygons) {
           polygonOpt.offsets.clear();
@@ -151,18 +152,17 @@ class PolygonLayer extends StatelessWidget {
 //          var maxPos = map.project(maxBound);
 //          maxPos = maxPos.multiplyBy(map.getZoomScale(map.zoom, map.zoom)) - map.getPixelOrigin();
 
-
-          if(map.zoom >= 10.0){
-            print('S: ${screenBBRadians}');
-            print('P: ${polygonOpt.boundingBox}');
-          }
-
           // only draw polygons that overlap with the screens bounding box
           if(!polygonOpt.boundingBox.isOverlapping(screenBBRadians))
           {
             // skip this polygon as it's offscreen
             continue;
           }
+
+          // TODO: polygon clipping, this will speed up the drawing of large complex polygones when up close.
+//          // clip the polygon, we don't want to draw parts that are way off screen
+//          List<LatLng> clippedPolygon = clipPolygon(polygonOpt, screenPoly);
+//          polygonOpt = Polygon(points: clippedPolygon, borderStrokeWidth: polygonOpt.borderStrokeWidth, borderColor: polygonOpt.borderColor, color: polygonOpt.color);
 
           // print('\nScreen: $screenBounds');
           // print('min: $minPos | max: $maxPos');
@@ -199,6 +199,46 @@ class PolygonLayer extends StatelessWidget {
     );
   }
 }
+
+//bool inside (p, cp1, cp2) {
+//  return (cp2[0]-cp1[0])*(p[1]-cp1[1]) > (cp2[1]-cp1[1])*(p[0]-cp1[0]);
+//}
+//
+//LatLng intersection (s, e, cp1, cp2) {
+//  var dc = [ cp1[0] - cp2[0], cp1[1] - cp2[1] ],
+//      dp = [ s[0] - e[0], s[1] - e[1] ],
+//      n1 = cp1[0] * cp2[1] - cp1[1] * cp2[0],
+//      n2 = s[0] * e[1] - s[1] * e[0],
+//      n3 = 1.0 / (dc[0] * dp[1] - dc[1] * dp[0]);
+//  return LatLng((n1*dp[1] - n2*dc[1]) * n3, (n1*dp[0] - n2*dc[0]) * n3);
+//}
+//
+//List<LatLng> clipPolygon (Polygon subjectPolygon, Polygon clipPolygon) {
+//  LatLng cp1, cp2, s, e;
+//  var outputList = subjectPolygon.points;
+//  cp1 = clipPolygon.points[clipPolygon.points.length-1];
+//  for (LatLng j in clipPolygon.points) {
+//    var cp2 = clipPolygon.points[clipPolygon.points.indexOf(j)];
+//    var inputList = outputList;
+//    outputList = List();
+//    s = inputList[inputList.length - 1]; //last on the input list
+//    for (LatLng i in inputList) {
+//      var e = inputList[inputList.indexOf(i)];
+//      if (inside(e, cp1, cp2)) {
+//        if (!inside(s, cp1, cp2)) {
+//          outputList.add(intersection(s, e, cp1, cp2));
+//        }
+//        outputList.add(e);
+//      }
+//      else if (inside(s, cp1, cp2)) {
+//        outputList.add(intersection(s, e, cp1, cp2));
+//      }
+//      s = e;
+//    }
+//    cp1 = cp2;
+//  }
+//  return outputList;
+//}
 
 class PolygonPainter extends CustomPainter {
   final Polygon polygonOpt;
