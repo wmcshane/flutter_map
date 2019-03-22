@@ -26,12 +26,16 @@ class Polygon {
     this.borderStrokeWidth = 0.0,
     this.borderColor = const Color(0xFFFFFF00),
   }){
-    calcBoundingBox();
+    this.boundingBox = calcBoundingBox();
   }
 
-  void calcBoundingBox()
+  BoundingBox calcBoundingBox()
   {
-    BoundingBox bb = new BoundingBox();
+    num minX;
+    num maxX;
+    num minY;
+    num maxY;
+
     for(LatLng point in points)
     {
       // convert lat lon to custom point stored as radians
@@ -39,47 +43,44 @@ class Polygon {
       num y = point.latitude * Math.pi / 180.0;
       CustomPoint cPoint = CustomPoint(x, y);
 
-      if(bb.minX == null || bb.minX > cPoint.x)
+      if(minX == null || minX > cPoint.x)
       {
-        bb.minX = cPoint.x;
+        minX = cPoint.x;
       }
 
-      if(bb.minY == null || bb.minY > cPoint.y)
+      if(minY == null || minY > cPoint.y)
       {
-        bb.minY = cPoint.y;
+        minY = cPoint.y;
       }
 
-      if(bb.maxX == null || bb.maxX < cPoint.x)
+      if(maxX == null || maxX < cPoint.x)
       {
-        bb.maxX = cPoint.x;
+        maxX = cPoint.x;
       }
 
-      if(bb.maxY == null || bb.maxY < cPoint.y)
+      if(maxY == null || maxY < cPoint.y)
       {
-        bb.maxY = cPoint.y;
+        maxY = cPoint.y;
       }
     }
 
-    boundingBox = bb;
+    return BoundingBox(min: Math.Point(minX, minY), max: Math.Point(maxX, maxY));
   }
 }
 
 class BoundingBox
 {
-  double minX;
-  double maxX;
-  double minY;
-  double maxY;
-  BoundingBox({this.minX, this.maxX, this.minY, this.maxY});
+  Math.Point min;
+  Math.Point max;
+
+  BoundingBox({this.min, this.max});
 
   // bounding box will be stored as latLng in radians instead of degrees
   BoundingBox getAsDegrees()
   {
     BoundingBox latLngBB = BoundingBox (
-      minX: this.minX * 180 / Math.pi,
-      maxX: this.maxX * 180 / Math.pi,
-      minY: this.minY * 180 / Math.pi,
-      maxY: this.maxY * 180 / Math.pi,
+      min: Math.Point(this.min.x * 180 / Math.pi, this.min.y * 180 / Math.pi),
+      max: Math.Point(this.max.x * 180 / Math.pi, this.max.y * 180 / Math.pi),
     );
 
     return latLngBB;
@@ -88,60 +89,29 @@ class BoundingBox
   BoundingBox getAsRadians()
   {
     BoundingBox radiansBB = BoundingBox (
-      minX: this.minX * Math.pi / 180.0,
-      maxX: this.maxX * Math.pi / 180.0,
-      minY: this.minY * Math.pi / 180.0,
-      maxY: this.maxY * Math.pi / 180.0,
+      min: Math.Point(this.min.x * Math.pi / 180.0, this.min.y * Math.pi / 180.0),
+      max: Math.Point(this.max.x * Math.pi / 180.0, this.max.y * Math.pi / 180.0),
     );
 
     return radiansBB;
   }
 
-  bool inViewPort(BoundingBox bounds)
+  bool isOverlapping(BoundingBox bounds)
   {
-    // if the screen contains the one of the points of the four corners of the polygons bounding box
-    // or the polygons bounding box contains one of the screens corner points
-    // it is consider to be in the view port
-    BoundingBox op1 = bbFromPoint(CustomPoint(this.minX, this.minY));
-    BoundingBox op2 = bbFromPoint(CustomPoint(this.minX, this.maxY));
-    BoundingBox op3 = bbFromPoint(CustomPoint(this.maxX, this.minY));
-    BoundingBox op4 = bbFromPoint(CustomPoint(this.maxX, this.maxY));
-
-    BoundingBox op5 = bbFromPoint(CustomPoint(bounds.minX, bounds.minY));
-    BoundingBox op6 = bbFromPoint(CustomPoint(bounds.minX, bounds.maxY));
-    BoundingBox op7 = bbFromPoint(CustomPoint(bounds.maxX, bounds.minY));
-    BoundingBox op8 = bbFromPoint(CustomPoint(bounds.maxX, bounds.maxY));
-
-    if(bounds.containsBounds(op1) || bounds.containsBounds(op2) || bounds.containsBounds(op3) || bounds.containsBounds(op4) ||
-        this.containsBounds(op5) || this.containsBounds(op6) || this.containsBounds(op7) || this.containsBounds(op8))
+    print('$this | $bounds');
+    // check if bounding box rectangle is outside the other, if it is then it's considered not overlapping
+    if(this.min.y > bounds.max.y || this.max.y < bounds.min.y || this.max.x < bounds.min.x || this.min.x > bounds.max.x)
     {
-      return true; // in viewport
+      return false;
     }
 
-    return false;
-  }
-
-  BoundingBox bbFromPoint(CustomPoint point)
-  {
-    return BoundingBox(
-      minX: point.x.toDouble(),
-      maxX: point.x.toDouble(),
-      minY: point.y.toDouble(),
-      maxY: point.y.toDouble(),
-    );
-  }
-
-  bool containsBounds(BoundingBox bounds) {
-    return (bounds.minY >= this.minY) && // min
-        (bounds.maxY <= this.maxY) && // max
-        (bounds.minX >= this.minX) && // min
-        (bounds.maxX <= this.maxX); // max
+    return true;
   }
 
   @override
   String toString()
   {
-    return '$minX $maxX | $minY $maxY';
+    return '$min | $max';
   }
 }
 
@@ -168,14 +138,10 @@ class PolygonLayer extends StatelessWidget {
 
         var polygons = <Widget>[];
         LatLngBounds screenBounds = map.bounds;
-        BoundingBox screenBBRadians = BoundingBox(minX: screenBounds.west, maxX: screenBounds.east, minY: screenBounds.south, maxY: screenBounds.north).getAsRadians();
+        BoundingBox screenBBRadians = BoundingBox(min: Math.Point(screenBounds.west, screenBounds.south), max: Math.Point(screenBounds.east, screenBounds.north)).getAsRadians();
         for (var polygonOpt in polygonOpts.polygons) {
           polygonOpt.offsets.clear();
           var i = 0;
-
-          // cull polygons that aren't within the screen space
-          //check if polygon is within the view
-          //print('POLY Bounds: ${polygonOpt.boundingBox}');
 
 //          LatLng minBound = LatLng(polygonOpt.boundingBox.minY, polygonOpt.boundingBox.minX);
 //          LatLng maxBound = LatLng(polygonOpt.boundingBox.maxY, polygonOpt.boundingBox.maxX);
@@ -186,28 +152,16 @@ class PolygonLayer extends StatelessWidget {
 //          var maxPos = map.project(maxBound);
 //          maxPos = maxPos.multiplyBy(map.getZoomScale(map.zoom, map.zoom)) - map.getPixelOrigin();
 
-//          print('\n\nScreen: $screenBBRadians');
-//          print('Polygon: ${polygonOpt.boundingBox}');
-
-          if(!polygonOpt.boundingBox.inViewPort(screenBBRadians))
+          // only draw polygons that overlap with the screens bounding box
+          if(!polygonOpt.boundingBox.isOverlapping(screenBBRadians))
           {
-//            print('Not drawing!');
             // skip this polygon as it's offscreen
             continue;
           }
 
-//          if(!screenBounds.contains(minBound) && !screenBounds.contains(maxBound))
-//          {
-//            //print('Not drawing!');
-//            // skip this polygon as it's offscreen
-//            continue;
-//          }
-//          else
-//          {
-//            // print('\nScreen: $screenBounds');
-//            // print('min: $minPos | max: $maxPos');
-//            // print ('min: $minBound | max: $maxBound');
-//          }
+          // print('\nScreen: $screenBounds');
+          // print('min: $minPos | max: $maxPos');
+          // print ('min: $minBound | max: $maxBound');
 
           // convert polygon points to screen space
           for (var point in polygonOpt.points) {
