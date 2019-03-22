@@ -98,7 +98,6 @@ class BoundingBox
 
   bool isOverlapping(BoundingBox bounds)
   {
-    print('$this | $bounds');
     // check if bounding box rectangle is outside the other, if it is then it's considered not overlapping
     if(this.min.y > bounds.max.y || this.max.y < bounds.min.y || this.max.x < bounds.min.x || this.min.x > bounds.max.x)
     {
@@ -183,7 +182,7 @@ class PolygonLayer extends StatelessWidget {
           );
         }
 
-        print('Drawing ${polygons.length} Polygons');
+        //print('Drawing ${polygons.length} Polygons');
 
         return new Container(
           child: new Stack(
@@ -239,6 +238,8 @@ class PolygonPainter extends CustomPainter {
         _paintLine(canvas, ring, borderRadius, borderPaint);
       }
     }
+
+    canvas.clipRect(rect);
   }
 
   void _paintLine(Canvas canvas, List<Offset> offsets, double radius, Paint paint) {
