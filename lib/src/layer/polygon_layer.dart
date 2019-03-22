@@ -191,7 +191,7 @@ class PolygonLayer extends StatelessWidget {
           );
         }
 
-        print('Drawing ${polygons.length} Polygons');
+        //print('Drawing ${polygons.length} Polygons');
 
         return new Container(
           child: new Stack(
@@ -205,12 +205,17 @@ class PolygonLayer extends StatelessWidget {
 
 /// Sutherland-Hodgman polygon clipping
 /// https://rosettacode.org/wiki/Sutherland-Hodgman_polygon_clipping#Java
+/// // TODO: convert points to radians!!!
 List<LatLng> clipPolygon(List<LatLng> subjectPolygon, List<LatLng> clipPolygon) {
   List<LatLng> outputList = List.from(subjectPolygon); // TODO: may need list.from
 
+  bool removedLast = false;
   // remove linking point
   if(outputList != null && outputList.isNotEmpty){
-    outputList.removeAt(outputList.length-1);
+    if(outputList.first == outputList.last) {
+      removedLast = true;
+      outputList.removeAt(outputList.length - 1);
+    }
   }
 
   int len = clipPolygon.length;
@@ -237,12 +242,14 @@ List<LatLng> clipPolygon(List<LatLng> subjectPolygon, List<LatLng> clipPolygon) 
         outputList.add(intersection(A, B, P, Q));
     }
 
-    print(outputList);
+    //print(outputList);
   }
 
   // re add linking point
   if (outputList != null && outputList.isNotEmpty) {
-    outputList.add(outputList[0]);
+    if(removedLast) {
+      outputList.add(outputList[0]);
+    }
   }
 
   return outputList;
