@@ -169,9 +169,11 @@ class PolygonLayer extends StatelessWidget {
 
           // TODO: polygon clipping, this will speed up the drawing of large complex polygones when up close.
           // clip the polygon, we don't want to draw parts that are way off screen
-          List<LatLng> clippedPoly = clipPolygon(List.from(polygonOpt.points), [screenBounds.northWest, screenBounds.southWest, screenBounds.southEast, screenBounds.northEast]);
-          Polygon drawPoly = Polygon(points: clippedPoly, color: polygonOpt.color, borderColor: polygonOpt.borderColor, borderStrokeWidth: polygonOpt.borderStrokeWidth);
+          //List<LatLng> clippedPoly = clipPolygon(List.from(polygonOpt.points), [screenBounds.northWest, screenBounds.southWest, screenBounds.southEast, screenBounds.northEast]);
+          //Polygon drawPoly = Polygon(points: clippedPoly, color: polygonOpt.color, borderColor: polygonOpt.borderColor, borderStrokeWidth: polygonOpt.borderStrokeWidth);
 
+          Polygon drawPoly = Polygon(points: List.from(polygonOpt.points), color: polygonOpt.color, borderColor: polygonOpt.borderColor, borderStrokeWidth: polygonOpt.borderStrokeWidth);
+          
           drawPoly.offsets.clear();
           //simplify the polygon
           if(polygonOpts.ramerDouglasPeuckerOptions != null && polygonOpts.ramerDouglasPeuckerOptions.apply)
