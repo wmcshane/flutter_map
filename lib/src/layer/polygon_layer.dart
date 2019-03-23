@@ -9,7 +9,8 @@ import 'dart:math' as Math;
 
 class PolygonLayerOptions extends LayerOptions {
   final List<Polygon> polygons;
-  PolygonLayerOptions({this.polygons = const [], rebuild})
+  final RamerDouglasPeuckerOptions ramerDouglasPeuckerOptions;
+  PolygonLayerOptions({this.polygons = const [], rebuild, this.ramerDouglasPeuckerOptions})
       : super(rebuild: rebuild);
 }
 
@@ -114,6 +115,13 @@ class BoundingBox
   }
 }
 
+/// used for line smoothing
+class RamerDouglasPeuckerOptions {
+  bool apply = false;
+  double epsilon;
+  RamerDouglasPeuckerOptions({this.apply, this.epsilon});
+}
+
 class PolygonLayer extends StatelessWidget {
   final PolygonLayerOptions polygonOpts;
   final MapState map;
@@ -160,16 +168,18 @@ class PolygonLayer extends StatelessWidget {
           }
 
           // TODO: polygon clipping, this will speed up the drawing of large complex polygones when up close.
-//          // clip the polygon, we don't want to draw parts that are way off screen
-//          List<LatLng> clippedPolygon = clipPolygon(polygonOpt, screenPoly);
-//          polygonOpt = Polygon(points: clippedPolygon, borderStrokeWidth: polygonOpt.borderStrokeWidth, borderColor: polygonOpt.borderColor, color: polygonOpt.color);
+          // clip the polygon, we don't want to draw parts that are way off screen
+//          List<LatLng> clippedPoly = clipPolygon(polygonOpt.points, [screenBounds.northWest, screenBounds.southWest, screenBounds.southEast, screenBounds.northEast]);
+//          polygonOpt = Polygon(points: clippedPoly, color: polygonOpt.color, borderColor: polygonOpt.borderColor, borderStrokeWidth: polygonOpt.borderStrokeWidth);
 
-          List<LatLng> clippedPoly = clipPolygon(polygonOpt.points, [screenBounds.northWest, screenBounds.southWest, screenBounds.southEast, screenBounds.northEast]);
-          polygonOpt = Polygon(points: clippedPoly, color: polygonOpt.color, borderColor: polygonOpt.borderColor, borderStrokeWidth: polygonOpt.borderStrokeWidth);
-
-          // print('\nScreen: $screenBounds');
-          // print('min: $minPos | max: $maxPos');
-          // print ('min: $minBound | max: $maxBound');
+          //simplify the polygon
+          if(polygonOpts.ramerDouglasPeuckerOptions != null && polygonOpts.ramerDouglasPeuckerOptions.apply)
+          {
+            List<LatLng> pointListOut = List();
+            ramerDouglasPeucker(polygonOpt.points, polygonOpts.ramerDouglasPeuckerOptions.epsilon, pointListOut);
+            polygonOpt.points.clear();
+            polygonOpt.points.addAll(pointListOut);
+          }
 
           // convert polygon points to screen space
           for (var point in polygonOpt.points) {
@@ -274,6 +284,87 @@ LatLng intersection(LatLng a, LatLng b, LatLng p, LatLng q) {
 
   return new LatLng(y, x); // TODO: was x, y
 }
+
+
+
+
+
+
+
+double perpendicularDistance(LatLng pt, LatLng lineStart, LatLng lineEnd) {
+  double dx = lineEnd.longitude - lineStart.longitude;
+  double dy = lineEnd.latitude - lineStart.latitude;
+
+  // Normalize
+  //double mag = (sqrt(dx) + sqrt(dy)); // TODO: no hypot function in dart
+  double mag = hypot([dx, dy]);
+  if (mag > 0.0) {
+    dx /= mag;
+    dy /= mag;
+  }
+  double pvx = pt.longitude - lineStart.longitude;
+  double pvy = pt.latitude - lineStart.latitude;
+
+  // Get dot product (project pv onto normalized direction)
+  double pvdot = dx * pvx + dy * pvy;
+
+  // Scale line direction vector and subtract it from pv
+  double ax = pvx - pvdot * dx;
+  double ay = pvy - pvdot * dy;
+
+  //return (sqrt(ax) + sqrt(ay)); // TODO: no hypot function in dart
+  return hypot([ax, ay]);
+}
+
+hypot(List<double> arguments) {
+  var y = 0.0;
+  arguments.reversed.forEach((v){
+    y += v * v;
+  });
+  return Math.sqrt(y);
+}
+
+List<LatLng> ramerDouglasPeucker(List<LatLng> pointList, double epsilon, List<LatLng> out) {
+  if (pointList.length < 2) {
+    return pointList; // not enough points to simplify return og list
+  }
+
+  // Find the point with the maximum distance from line between the start and end
+  double dmax = 0.0;
+  int index = 0;
+  int end = pointList.length - 1;
+  for (int i = 1; i < end; ++i) {
+    double d = perpendicularDistance(pointList[i], pointList[0], pointList[end]);
+    if (d > dmax) {
+      index = i;
+      dmax = d;
+    }
+  }
+
+  // If max distance is greater than epsilon, recursively simplify
+  if (dmax > epsilon) {
+    List<LatLng> recResults1 = List();
+    List<LatLng> recResults2 = List();
+
+    List<LatLng> firstLine = List.from(pointList.getRange(0, index + 1));
+    List<LatLng> lastLine = List.from(pointList.getRange(index, pointList.length));
+    ramerDouglasPeucker(firstLine, epsilon, recResults1);
+    ramerDouglasPeucker(lastLine, epsilon, recResults2);
+
+    // build the result list
+    out.addAll(recResults1.getRange(0, recResults1.length - 1));
+    out.addAll(recResults2);
+    if (out.length < 2) throw ("Problem assembling output");
+  } else {
+    // Just return start and end points
+    out.clear();
+    out.add(pointList[0]);
+    out.add(pointList[(pointList.length - 1)]);
+  }
+}
+
+
+
 
 class PolygonPainter extends CustomPainter {
   final Polygon polygonOpt;

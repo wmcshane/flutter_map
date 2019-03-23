@@ -122,20 +122,16 @@ class PolylineLayer extends StatelessWidget {
     return new StreamBuilder<int>(
       stream: stream, // a Stream<int> or null
       builder: (BuildContext context, _) {
+        var polylines = <Widget>[];
         for (var polylineOpt in polylineOpts.polylines) {
           polylineOpt.offsets.clear();
           var i = 0;
 
-
           // Ramer-Douglas-Peucker line simplification
           List<LatLng> pointListOut = List();
-          print('start ${polylineOpt.points}');
           ramerDouglasPeucker(polylineOpt.points, 0.0005, pointListOut);
-//          polylineOpt = Polyline(points: pointListOut, color: polylineOpt.color, borderColor: polylineOpt.borderColor, borderStrokeWidth: polylineOpt.borderStrokeWidth, strokeWidth: polylineOpt
-//              .strokeWidth, isDotted: polylineOpt.isDotted);
           polylineOpt.points.clear();
           polylineOpt.points.addAll(pointListOut);
-          print('end: ${polylineOpt.points}');
 
           // convert points to screen space
           for (var point in polylineOpt.points) {
@@ -147,10 +143,7 @@ class PolylineLayer extends StatelessWidget {
             }
             i++;
           }
-        }
 
-        var polylines = <Widget>[];
-        for (var polylineOpt in this.polylineOpts.polylines) {
           polylines.add(
             new CustomPaint(
               painter: new PolylinePainter(polylineOpt),
