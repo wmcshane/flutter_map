@@ -169,25 +169,26 @@ class PolygonLayer extends StatelessWidget {
 
           // TODO: polygon clipping, this will speed up the drawing of large complex polygones when up close.
           // clip the polygon, we don't want to draw parts that are way off screen
-//          List<LatLng> clippedPoly = clipPolygon(polygonOpt.points, [screenBounds.northWest, screenBounds.southWest, screenBounds.southEast, screenBounds.northEast]);
-//          polygonOpt = Polygon(points: clippedPoly, color: polygonOpt.color, borderColor: polygonOpt.borderColor, borderStrokeWidth: polygonOpt.borderStrokeWidth);
+          List<LatLng> clippedPoly = clipPolygon(List.from(polygonOpt.points), [screenBounds.northWest, screenBounds.southWest, screenBounds.southEast, screenBounds.northEast]);
+          Polygon drawPoly = Polygon(points: clippedPoly, color: polygonOpt.color, borderColor: polygonOpt.borderColor, borderStrokeWidth: polygonOpt.borderStrokeWidth);
 
+          drawPoly.offsets.clear();
           //simplify the polygon
           if(polygonOpts.ramerDouglasPeuckerOptions != null && polygonOpts.ramerDouglasPeuckerOptions.apply)
           {
             List<LatLng> pointListOut = List();
-            ramerDouglasPeucker(polygonOpt.points, polygonOpts.ramerDouglasPeuckerOptions.epsilon, pointListOut);
-            polygonOpt.points.clear();
-            polygonOpt.points.addAll(pointListOut);
+            ramerDouglasPeucker(drawPoly.points, polygonOpts.ramerDouglasPeuckerOptions.epsilon, pointListOut);
+            drawPoly.points.clear();
+            drawPoly.points.addAll(pointListOut);
           }
 
           // convert polygon points to screen space
-          for (var point in polygonOpt.points) {
+          for (var point in drawPoly.points) {
             var pos = map.project(point);
             pos = pos.multiplyBy(map.getZoomScale(map.zoom, map.zoom)) - map.getPixelOrigin();
-            polygonOpt.offsets.add(new Offset(pos.x.toDouble(), pos.y.toDouble()));
-            if (i > 0 && i < polygonOpt.points.length) {
-              polygonOpt.offsets.add(new Offset(pos.x.toDouble(), pos.y.toDouble()));
+            drawPoly.offsets.add(new Offset(pos.x.toDouble(), pos.y.toDouble()));
+            if (i > 0 && i < drawPoly.points.length) {
+              drawPoly.offsets.add(new Offset(pos.x.toDouble(), pos.y.toDouble()));
             }
             i++;
           }
@@ -195,7 +196,7 @@ class PolygonLayer extends StatelessWidget {
           // add polygons to be rendered
           polygons.add(
             new CustomPaint(
-              painter: new PolygonPainter(polygonOpt),
+              painter: new PolygonPainter(drawPoly),
               size: size,
             ),
           );
