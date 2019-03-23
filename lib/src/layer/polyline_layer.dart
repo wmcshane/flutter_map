@@ -46,6 +46,78 @@ class PolylineLayer extends StatelessWidget {
     );
   }
 
+  double perpendicularDistance(LatLng pt, LatLng lineStart, LatLng lineEnd) {
+    double dx = lineEnd.longitude - lineStart.longitude;
+    double dy = lineEnd.latitude - lineStart.latitude;
+
+    // Normalize
+    //double mag = (sqrt(dx) + sqrt(dy)); // TODO: no hypot function in dart
+    double mag = hypot([dx, dy]);
+    if (mag > 0.0) {
+      dx /= mag;
+      dy /= mag;
+    }
+    double pvx = pt.longitude - lineStart.longitude;
+    double pvy = pt.latitude - lineStart.latitude;
+
+    // Get dot product (project pv onto normalized direction)
+    double pvdot = dx * pvx + dy * pvy;
+
+    // Scale line direction vector and subtract it from pv
+    double ax = pvx - pvdot * dx;
+    double ay = pvy - pvdot * dy;
+
+    //return (sqrt(ax) + sqrt(ay)); // TODO: no hypot function in dart
+    return hypot([ax, ay]);
+  }
+
+  hypot(List<double> arguments) {
+    var y = 0.0;
+    arguments.reversed.forEach((v){
+      y += v * v;
+    });
+    return sqrt(y);
+  }
+
+  List<LatLng> ramerDouglasPeucker(List<LatLng> pointList, double epsilon, List<LatLng> out) {
+    if (pointList.length < 2) {
+      return pointList; // not enough points to simplify return og list
+    }
+
+    // Find the point with the maximum distance from line between the start and end
+    double dmax = 0.0;
+    int index = 0;
+    int end = pointList.length - 1;
+    for (int i = 1; i < end; ++i) {
+      double d = perpendicularDistance(pointList[i], pointList[0], pointList[end]);
+      if (d > dmax) {
+        index = i;
+        dmax = d;
+      }
+    }
+
+    // If max distance is greater than epsilon, recursively simplify
+    if (dmax > epsilon) {
+      List<LatLng> recResults1 = List();
+      List<LatLng> recResults2 = List();
+
+      List<LatLng> firstLine = List.from(pointList.getRange(0, index + 1));
+      List<LatLng> lastLine = List.from(pointList.getRange(index, pointList.length));
+      ramerDouglasPeucker(firstLine, epsilon, recResults1);
+      ramerDouglasPeucker(lastLine, epsilon, recResults2);
+
+      // build the result list
+      out.addAll(recResults1.getRange(0, recResults1.length - 1));
+      out.addAll(recResults2);
+      if (out.length < 2) throw ("Problem assembling output");
+    } else {
+      // Just return start and end points
+      out.clear();
+      out.add(pointList[0]);
+      out.add(pointList[(pointList.length - 1)]);
+    }
+  }
+
   Widget _build(BuildContext context, Size size) {
     return new StreamBuilder<int>(
       stream: stream, // a Stream<int> or null
@@ -53,6 +125,19 @@ class PolylineLayer extends StatelessWidget {
         for (var polylineOpt in polylineOpts.polylines) {
           polylineOpt.offsets.clear();
           var i = 0;
+
+
+          // Ramer-Douglas-Peucker line simplification
+          List<LatLng> pointListOut = List();
+          print('start ${polylineOpt.points}');
+          ramerDouglasPeucker(polylineOpt.points, 0.0005, pointListOut);
+//          polylineOpt = Polyline(points: pointListOut, color: polylineOpt.color, borderColor: polylineOpt.borderColor, borderStrokeWidth: polylineOpt.borderStrokeWidth, strokeWidth: polylineOpt
+//              .strokeWidth, isDotted: polylineOpt.isDotted);
+          polylineOpt.points.clear();
+          polylineOpt.points.addAll(pointListOut);
+          print('end: ${polylineOpt.points}');
+
+          // convert points to screen space
           for (var point in polylineOpt.points) {
             var pos = map.project(point);
             pos = pos.multiplyBy(map.getZoomScale(map.zoom, map.zoom)) - map.getPixelOrigin();
