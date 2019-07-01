@@ -11,8 +11,9 @@ class PolygonLayerOptions extends LayerOptions {
   final List<Polygon> polygons;
   final RamerDouglasPeuckerOptions ramerDouglasPeuckerOptions;
   final SutherlandHodgmanOptions sutherlandHodgmanOptions;
+  final bool polygonCulling; /// screen space culling of polygons
 
-  PolygonLayerOptions({this.polygons = const [], rebuild, this.ramerDouglasPeuckerOptions, this.sutherlandHodgmanOptions}) : super(rebuild: rebuild);
+  PolygonLayerOptions({this.polygons = const [], rebuild, this.ramerDouglasPeuckerOptions, this.sutherlandHodgmanOptions, this.polygonCulling = false}) : super(rebuild: rebuild);
 }
 
 class Polygon {
@@ -165,7 +166,7 @@ class PolygonLayer extends StatelessWidget {
 //          maxPos = maxPos.multiplyBy(map.getZoomScale(map.zoom, map.zoom)) - map.getPixelOrigin();
 
           // only draw polygons that overlap with the screens bounding box
-          if (!polygonOpt.boundingBox.isOverlapping(screenBBRadians)) {
+          if (polygonOpts.polygonCulling && !polygonOpt.boundingBox.isOverlapping(screenBBRadians)) {
             // skip this polygon as it's offscreen
             continue;
           }
