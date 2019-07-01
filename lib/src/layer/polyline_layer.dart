@@ -20,6 +20,8 @@ class Polyline {
   final double borderStrokeWidth;
   final Color borderColor;
   final bool isDotted;
+  final bool lineSmoothing;
+  final double lineSmoothingEpsilon;
 
   Polyline({
     this.points,
@@ -28,6 +30,8 @@ class Polyline {
     this.borderStrokeWidth = 0.0,
     this.borderColor = const Color(0xFFFFFF00),
     this.isDotted = false,
+    this.lineSmoothing = false,
+    this.lineSmoothingEpsilon = 0.0005,
   });
 }
 
@@ -129,11 +133,13 @@ class PolylineLayer extends StatelessWidget {
           polylineOpt.offsets.clear();
           var i = 0;
 
-          // Ramer-Douglas-Peucker line simplification
-          List<LatLng> pointListOut = List();
-          ramerDouglasPeucker(polylineOpt.points, 0.0005, pointListOut);
-          polylineOpt.points.clear();
-          polylineOpt.points.addAll(pointListOut);
+          if(polylineOpt.lineSmoothing) {
+            // Ramer-Douglas-Peucker line simplification
+            List<LatLng> pointListOut = List();
+            ramerDouglasPeucker(polylineOpt.points, polylineOpt.lineSmoothingEpsilon, pointListOut);
+            polylineOpt.points.clear();
+            polylineOpt.points.addAll(pointListOut);
+          }
 
           // convert points to screen space
           for (var point in polylineOpt.points) {
