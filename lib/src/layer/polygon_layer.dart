@@ -1,4 +1,5 @@
 import 'dart:math' as Math;
+import 'dart:math';
 import 'dart:ui';
 
 import 'package:flutter/widgets.dart';
@@ -387,12 +388,38 @@ class PolygonPainter extends CustomPainter {
 
     double borderRadius = (polygonOpt.borderStrokeWidth / 2);
     if (polygonOpt.borderStrokeWidth > 0.0) {
-      for (List<Offset> ring in rings) {
-        _paintLine(canvas, ring, borderRadius, borderPaint);
+      if (polygonOpt.isDotted) {
+        var spacing = polygonOpt.borderStrokeWidth * 1.5;
+        for (List<Offset> ring in rings) {
+          _paintDottedLine(canvas, ring, borderRadius, spacing, borderPaint);
+        }
+      } else {
+        for (List<Offset> ring in rings) {
+          _paintLine(canvas, ring, borderRadius, borderPaint);
+        }
       }
     }
 
     canvas.clipRect(rect);
+  }
+
+  void _paintDottedLine(Canvas canvas, List<Offset> offsets, double radius, double stepLength, Paint paint) {
+    var startDistance = 0.0;
+    for (var i = 0; i < offsets.length - 1; i++) {
+      var o0 = offsets[i];
+      var o1 = offsets[i + 1];
+      var totalDistance = _dist(o0, o1);
+      var distance = startDistance;
+      while (distance < totalDistance) {
+        var f1 = distance / totalDistance;
+        var f0 = 1.0 - f1;
+        var offset = Offset(o0.dx * f0 + o1.dx * f1, o0.dy * f0 + o1.dy * f1);
+        canvas.drawCircle(offset, radius, paint);
+        distance += stepLength;
+      }
+      startDistance = distance < totalDistance ? stepLength - (totalDistance - distance) : distance - totalDistance;
+    }
+    canvas.drawCircle(polygonOpt.offsets.last, radius, paint);
   }
 
   void _paintLine(Canvas canvas, List<Offset> offsets, double radius, Paint paint) {
@@ -412,4 +439,16 @@ class PolygonPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(PolygonPainter other) => false;
+
+  double _dist(Offset v, Offset w) {
+    return sqrt(_dist2(v, w));
+  }
+
+  double _dist2(Offset v, Offset w) {
+    return _sqr(v.dx - w.dx) + _sqr(v.dy - w.dy);
+  }
+
+  double _sqr(double x) {
+    return x * x;
+  }
 }
