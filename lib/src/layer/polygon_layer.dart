@@ -35,35 +35,39 @@ class Polygon {
   }
 
   BoundingBox calcBoundingBox() {
-    num minX;
-    num maxX;
-    num minY;
-    num maxY;
+    if (points != null && points.isNotEmpty) {
+      num minX;
+      num maxX;
+      num minY;
+      num maxY;
 
-    for (LatLng point in points) {
-      // convert lat lon to custom point stored as radians
-      num x = point.longitude * Math.pi / 180.0;
-      num y = point.latitude * Math.pi / 180.0;
-      CustomPoint cPoint = CustomPoint(x, y);
+      for (LatLng point in points) {
+        // convert lat lon to custom point stored as radians
+        num x = point.longitude * Math.pi / 180.0;
+        num y = point.latitude * Math.pi / 180.0;
+        CustomPoint cPoint = CustomPoint(x, y);
 
-      if (minX == null || minX > cPoint.x) {
-        minX = cPoint.x;
+        if (minX == null || minX > cPoint.x) {
+          minX = cPoint.x;
+        }
+
+        if (minY == null || minY > cPoint.y) {
+          minY = cPoint.y;
+        }
+
+        if (maxX == null || maxX < cPoint.x) {
+          maxX = cPoint.x;
+        }
+
+        if (maxY == null || maxY < cPoint.y) {
+          maxY = cPoint.y;
+        }
       }
 
-      if (minY == null || minY > cPoint.y) {
-        minY = cPoint.y;
-      }
-
-      if (maxX == null || maxX < cPoint.x) {
-        maxX = cPoint.x;
-      }
-
-      if (maxY == null || maxY < cPoint.y) {
-        maxY = cPoint.y;
-      }
+      return BoundingBox(min: Math.Point(minX, minY), max: Math.Point(maxX, maxY));
     }
 
-    return BoundingBox(min: Math.Point(minX, minY), max: Math.Point(maxX, maxY));
+    return BoundingBox(min: Math.Point(0, 0), max: Math.Point(0, 0));
   }
 }
 
@@ -116,9 +120,9 @@ class RamerDouglasPeuckerOptions {
 }
 
 /// used for polygon clipping to screen
-class SutherlandHodgmanOptions
-{
+class SutherlandHodgmanOptions {
   bool apply;
+
   SutherlandHodgmanOptions({this.apply = false});
 }
 
@@ -169,11 +173,10 @@ class PolygonLayer extends StatelessWidget {
           // TODO: polygon clipping, this will speed up the drawing of large complex polygones when up close.
           // clip the polygon, we don't want to draw parts that are way off screen
           Polygon drawPoly = new Polygon();
-          if(polygonOpts.sutherlandHodgmanOptions != null && polygonOpts.sutherlandHodgmanOptions.apply) {
+          if (polygonOpts.sutherlandHodgmanOptions != null && polygonOpts.sutherlandHodgmanOptions.apply) {
             List<LatLng> clippedPoly = clipPolygon(List.from(polygonOpt.points), [screenBounds.northWest, screenBounds.southWest, screenBounds.southEast, screenBounds.northEast]);
             drawPoly = Polygon(points: clippedPoly, color: polygonOpt.color, borderColor: polygonOpt.borderColor, borderStrokeWidth: polygonOpt.borderStrokeWidth);
-          }
-          else {
+          } else {
             drawPoly = Polygon(points: List.from(polygonOpt.points), color: polygonOpt.color, borderColor: polygonOpt.borderColor, borderStrokeWidth: polygonOpt.borderStrokeWidth);
           }
 
