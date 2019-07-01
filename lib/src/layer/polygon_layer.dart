@@ -10,8 +10,9 @@ import 'package:latlong/latlong.dart' hide Path; // conflict with Path from UI
 class PolygonLayerOptions extends LayerOptions {
   final List<Polygon> polygons;
   final RamerDouglasPeuckerOptions ramerDouglasPeuckerOptions;
+  final SutherlandHodgmanOptions sutherlandHodgmanOptions;
 
-  PolygonLayerOptions({this.polygons = const [], rebuild, this.ramerDouglasPeuckerOptions}) : super(rebuild: rebuild);
+  PolygonLayerOptions({this.polygons = const [], rebuild, this.ramerDouglasPeuckerOptions, this.sutherlandHodgmanOptions}) : super(rebuild: rebuild);
 }
 
 class Polygon {
@@ -114,6 +115,13 @@ class RamerDouglasPeuckerOptions {
   RamerDouglasPeuckerOptions({this.apply, this.epsilon});
 }
 
+/// used for polygon clipping to screen
+class SutherlandHodgmanOptions
+{
+  bool apply = false;
+  SutherlandHodgmanOptions({this.apply});
+}
+
 class PolygonLayer extends StatelessWidget {
   final PolygonLayerOptions polygonOpts;
   final MapState map;
@@ -160,8 +168,14 @@ class PolygonLayer extends StatelessWidget {
 
           // TODO: polygon clipping, this will speed up the drawing of large complex polygones when up close.
           // clip the polygon, we don't want to draw parts that are way off screen
-          List<LatLng> clippedPoly = clipPolygon(List.from(polygonOpt.points), [screenBounds.northWest, screenBounds.southWest, screenBounds.southEast, screenBounds.northEast]);
-          Polygon drawPoly = Polygon(points: clippedPoly, color: polygonOpt.color, borderColor: polygonOpt.borderColor, borderStrokeWidth: polygonOpt.borderStrokeWidth);
+          Polygon drawPoly = new Polygon();
+          if(polygonOpts.sutherlandHodgmanOptions.apply) {
+            List<LatLng> clippedPoly = clipPolygon(List.from(polygonOpt.points), [screenBounds.northWest, screenBounds.southWest, screenBounds.southEast, screenBounds.northEast]);
+            drawPoly = Polygon(points: clippedPoly, color: polygonOpt.color, borderColor: polygonOpt.borderColor, borderStrokeWidth: polygonOpt.borderStrokeWidth);
+          }
+          else {
+            drawPoly = Polygon(points: List.from(polygonOpt.points), color: polygonOpt.color, borderColor: polygonOpt.borderColor, borderStrokeWidth: polygonOpt.borderStrokeWidth);
+          }
 
           //Polygon drawPoly = Polygon(points: List.from(polygonOpt.points), color: polygonOpt.color, borderColor: polygonOpt.borderColor, borderStrokeWidth: polygonOpt.borderStrokeWidth);
 
