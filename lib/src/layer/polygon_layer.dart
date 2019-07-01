@@ -109,17 +109,17 @@ class BoundingBox {
 
 /// used for line smoothing
 class RamerDouglasPeuckerOptions {
-  bool apply = false;
+  bool apply;
   double epsilon;
 
-  RamerDouglasPeuckerOptions({this.apply, this.epsilon});
+  RamerDouglasPeuckerOptions({this.apply = false, this.epsilon});
 }
 
 /// used for polygon clipping to screen
 class SutherlandHodgmanOptions
 {
-  bool apply = false;
-  SutherlandHodgmanOptions({this.apply});
+  bool apply;
+  SutherlandHodgmanOptions({this.apply = false});
 }
 
 class PolygonLayer extends StatelessWidget {
@@ -169,7 +169,7 @@ class PolygonLayer extends StatelessWidget {
           // TODO: polygon clipping, this will speed up the drawing of large complex polygones when up close.
           // clip the polygon, we don't want to draw parts that are way off screen
           Polygon drawPoly = new Polygon();
-          if(polygonOpts.sutherlandHodgmanOptions.apply) {
+          if(polygonOpts.sutherlandHodgmanOptions != null && polygonOpts.sutherlandHodgmanOptions.apply) {
             List<LatLng> clippedPoly = clipPolygon(List.from(polygonOpt.points), [screenBounds.northWest, screenBounds.southWest, screenBounds.southEast, screenBounds.northEast]);
             drawPoly = Polygon(points: clippedPoly, color: polygonOpt.color, borderColor: polygonOpt.borderColor, borderStrokeWidth: polygonOpt.borderStrokeWidth);
           }
