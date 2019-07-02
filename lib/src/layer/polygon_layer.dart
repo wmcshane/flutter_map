@@ -188,6 +188,11 @@ class PolygonLayer extends StatelessWidget {
           if (polygonOpts.ramerDouglasPeuckerOptions != null && polygonOpts.ramerDouglasPeuckerOptions.apply) {
             List<LatLng> pointListOut = List();
             ramerDouglasPeucker(drawPoly.points, polygonOpts.ramerDouglasPeuckerOptions.epsilon, pointListOut);
+            // exclude if has less than 3 points
+            if(pointListOut.length < 3)
+            {
+              continue;
+            }
             drawPoly.points.clear();
             drawPoly.points.addAll(pointListOut);
           }
