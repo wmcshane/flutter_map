@@ -16,6 +16,11 @@ class MapControllerImpl implements MapController {
   @override
   Future<Null> get onReady => _readyCompleter.future;
 
+  MapState get getState
+  {
+    return _state;
+  }
+
   set state(MapState state) {
     _state = state;
     if (!_readyCompleter.isCompleted) {
