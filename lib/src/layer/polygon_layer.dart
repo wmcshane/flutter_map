@@ -120,16 +120,35 @@ class PolygonPainter extends CustomPainter {
           ..strokeWidth = polygonOpt.borderStrokeWidth)
         : null;
 
-    _paintPolygon(canvas, polygonOpt.offsets, paint);
+    List<List<Offset>> rings = new List();
+    Offset ringStart = polygonOpt.offsets[0];
+    int slidingWindow = 0;
+    for(int i = 1; i < polygonOpt.offsets.length-1; i++){
+      Offset cur = polygonOpt.offsets[i];
+      if(ringStart == cur){
+        //found the ring start, this is the end of the first polygon
+        rings.add(polygonOpt.offsets.sublist(slidingWindow, i+1));
+        slidingWindow = i + 3;
+        if(slidingWindow < polygonOpt.offsets.length-1) {
+          i = slidingWindow;
+          ringStart = polygonOpt.offsets[slidingWindow];
+        }
+      }
+    }
+
+    _paintPolygon(canvas, rings, paint);
 
     var borderRadius = (polygonOpt.borderStrokeWidth / 2);
     if (polygonOpt.borderStrokeWidth > 0.0) {
       if (polygonOpt.isDotted) {
         var spacing = polygonOpt.borderStrokeWidth * 1.5;
-        _paintDottedLine(
-            canvas, polygonOpt.offsets, borderRadius, spacing, borderPaint);
+        for(var ring in rings) {
+          _paintDottedLine(canvas, ring, borderRadius, spacing, borderPaint);
+        }
       } else {
-        _paintLine(canvas, polygonOpt.offsets, borderRadius, borderPaint);
+        for(var ring in rings) {
+          _paintLine(canvas, ring, borderRadius, borderPaint);
+        }
       }
     }
   }
@@ -164,9 +183,11 @@ class PolygonPainter extends CustomPainter {
     }
   }
 
-  void _paintPolygon(Canvas canvas, List<Offset> offsets, Paint paint) {
+  void _paintPolygon(Canvas canvas, List<List<Offset>> polygons, Paint paint) {
     var path = Path();
-    path.addPolygon(offsets, true);
+    for(var ring in polygons) {
+      path.addPolygon(ring, true);
+    }
     canvas.drawPath(path, paint);
   }
 
