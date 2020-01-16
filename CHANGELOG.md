@@ -1,3 +1,24 @@
+## [0.8.2] - 1/7/2019
+- add polyline with gradient (#452)
+
+Thanks to @SebWojd for this release!
+
+## [0.8.1] - 1/3/2019
+- Add ZoomButtonsPlugin (#487)
+
+Thanks to @moovida for this release!
+
+## [0.8.0] - 12/16/2019
+Added Flutter 1.12 support
+
+- Polygon Culling (#449)
+- fix marker anchor sample (#448, #427)
+- upgrade imageloader for Flutter 1.12 (#478)
+- Tidying up project files (#469)
+
+Thanks to @raacker, @Varuni-Punchihewa, @wmcshane, @domesticmouse, and @kimlet
+for this release!
+
 ## [0.7.3] - 10/3/2019
 - Update changelog (#408)
 - Readability improvements (#410)

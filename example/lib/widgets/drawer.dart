@@ -13,6 +13,7 @@ import '../pages/on_tap.dart';
 import '../pages/overlay_image.dart';
 import '../pages/plugin_api.dart';
 import '../pages/plugin_scalebar.dart';
+import '../pages/plugin_zoombuttons.dart';
 import '../pages/polyline.dart';
 import '../pages/tap_to_add.dart';
 
@@ -87,6 +88,13 @@ Drawer buildDrawer(BuildContext context, String currentRoute) {
           selected: currentRoute == PluginScaleBar.route,
           onTap: () {
             Navigator.pushReplacementNamed(context, PluginScaleBar.route);
+          },
+        ),
+        ListTile(
+          title: const Text('ZoomButtons Plugins'),
+          selected: currentRoute == PluginZoomButtons.route,
+          onTap: () {
+            Navigator.pushReplacementNamed(context, PluginZoomButtons.route);
           },
         ),
         ListTile(
