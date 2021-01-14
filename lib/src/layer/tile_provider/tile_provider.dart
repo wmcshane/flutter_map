@@ -6,8 +6,6 @@ import 'package:flutter_image/network.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_map/src/core/util.dart' as util;
 
-export 'package:flutter_map/src/layer/tile_provider/mbtiles_image_provider.dart';
-
 abstract class TileProvider {
   const TileProvider();
 
@@ -16,18 +14,36 @@ abstract class TileProvider {
   void dispose() {}
 
   String getTileUrl(Coords coords, TileLayerOptions options) {
+    var urlTemplate = (options.wmsOptions != null)
+        ? options.wmsOptions
+            .getUrl(coords, options.tileSize.toInt(), options.retinaMode)
+        : options.urlTemplate;
+
+    var z = _getZoomForUrl(coords, options);
+
     var data = <String, String>{
       'x': coords.x.round().toString(),
       'y': coords.y.round().toString(),
-      'z': coords.z.round().toString(),
-      's': getSubdomain(coords, options)
+      'z': z.round().toString(),
+      's': getSubdomain(coords, options),
+      'r': '@2x',
     };
     if (options.tms) {
-      data['y'] = invertY(coords.y.round(), coords.z.round()).toString();
+      data['y'] = invertY(coords.y.round(), z.round()).toString();
     }
     var allOpts = Map<String, String>.from(data)
       ..addAll(options.additionalOptions);
-    return util.template(options.urlTemplate, allOpts);
+    return util.template(urlTemplate, allOpts);
+  }
+
+  double _getZoomForUrl(Coords coords, TileLayerOptions options) {
+    var zoom = coords.z;
+
+    if (options.zoomReverse) {
+      zoom = options.maxZoom - zoom;
+    }
+
+    return zoom += options.zoomOffset;
   }
 
   int invertY(int y, int z) {
