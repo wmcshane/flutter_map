@@ -168,12 +168,10 @@ class PolygonPainter extends CustomPainter {
 
       if (polygonOpt.isDotted) {
         var spacing = polygonOpt.borderStrokeWidth * 1.5;
-        _paintDottedLine(canvas, polygonOpt.offsets, borderRadius, spacing, borderPaint);
         for(var ring in polygonOpt.rings) {
           _paintDottedLine(canvas, ring, borderRadius, spacing, borderPaint);
         }
       } else {
-        _paintLine(canvas, polygonOpt.offsets, borderRadius, borderPaint);
         for(var ring in polygonOpt.rings) {
           _paintLine(canvas, ring, borderRadius, borderPaint);
         }
@@ -221,7 +219,6 @@ class PolygonPainter extends CustomPainter {
       ..color = polygonOpt.color;
 
     var path = Path();
-    // path.addPolygon(polygonOpt.offsets, true);
     for(var ring in polygonOpt.rings) {
       path.addPolygon(ring, true);
     }
