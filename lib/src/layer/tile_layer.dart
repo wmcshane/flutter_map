@@ -1183,49 +1183,19 @@ class _AnimatedTileState extends State<AnimatedTile> {
 
   @override
   Widget build(BuildContext context) {
-    Widget child = RawImage(
-      image: null,
-      fit: BoxFit.fill,
+    Widget child = FadeInImage(
+      placeholder: (widget.placeholderImage != null) ? widget.placeholderImage : MemoryImage(kTransparentImage),
+      image: widget.tile.imageProvider,
     );
 
-    // if(widget.placeholderImage != null) {
-    //   child = Image(
-    //     image: widget.placeholderImage,
-    //     fit: BoxFit.fill,
-    //   );
-    // } else {
-    //   child = RawImage(
-    //     image: null,
-    //     fit: BoxFit.fill,
-    //   );
-    // }
-
-    if(widget.tile.loadError && widget.errorImage != null) {
+    if (widget.tile.loadError && widget.errorImage != null) {
       child = Image(
         image: widget.errorImage,
         fit: BoxFit.fill,
       );
     }
 
-    if(widget.tile.imageInfo?.image != null) {
-      // child = RawImage(
-      //   image: widget.tile.imageInfo.image,
-      //   fit: BoxFit.fill,
-      // );
-      child = FadeInImage(
-        fadeInDuration: const Duration(milliseconds: 100),
-        placeholder: (widget.placeholderImage != null)
-            ? widget.placeholderImage
-            : MemoryImage(kTransparentImage),
-        image: widget.tile.imageProvider,
-        fit: BoxFit.fill,
-      );
-    }
-
-    return Opacity(
-      opacity: widget.tile.opacity,
-      child: child,
-    );
+    return child;
   }
 
   @override
