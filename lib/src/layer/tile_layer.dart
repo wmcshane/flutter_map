@@ -10,6 +10,7 @@ import 'package:flutter_map/src/geo/crs/crs.dart';
 import 'package:flutter_map/src/layer/tile_provider/tile_provider.dart';
 import 'package:flutter_map/src/map/map.dart';
 import 'package:latlong/latlong.dart';
+import 'package:transparent_image/transparent_image.dart';
 import 'package:tuple/tuple.dart';
 
 import 'layer.dart';
@@ -497,6 +498,7 @@ class _TileLayerState extends State<TileLayer> with TickerProviderStateMixin {
     final Widget content = AnimatedTile(
       tile: tile,
       errorImage: options.errorImage,
+      placeholderImage: options.placeholderImage,
     );
 
     return Positioned(
@@ -1166,8 +1168,9 @@ class Tile implements Comparable<Tile> {
 class AnimatedTile extends StatefulWidget {
   final Tile tile;
   final ImageProvider errorImage;
+  final ImageProvider placeholderImage;
 
-  AnimatedTile({Key key, @required this.tile, this.errorImage})
+  AnimatedTile({Key key, @required this.tile, this.errorImage, this.placeholderImage})
       : assert(null != tile),
         super(key: key);
 
@@ -1180,17 +1183,45 @@ class _AnimatedTileState extends State<AnimatedTile> {
 
   @override
   Widget build(BuildContext context) {
+    Widget child;
+
+    if(widget.placeholderImage != null) {
+      child = Image(
+        image: widget.placeholderImage,
+        fit: BoxFit.fill,
+      );
+    } else {
+      child = RawImage(
+        image: null,
+        fit: BoxFit.fill,
+      );
+    }
+
+    if(widget.tile.loadError && widget.errorImage != null) {
+      child = Image(
+        image: widget.errorImage,
+        fit: BoxFit.fill,
+      );
+    }
+
+    if(widget.tile.imageInfo?.image != null) {
+      child = RawImage(
+        image: widget.tile.imageInfo.image,
+        fit: BoxFit.fill,
+      );
+      // child = FadeInImage(
+      //   fadeInDuration: const Duration(milliseconds: 100),
+      //   placeholder: (widget.placeholderImage != null)
+      //       ? widget.placeholderImage
+      //       : MemoryImage(kTransparentImage),
+      //   image: widget.tile.imageProvider,
+      //   fit: BoxFit.fill,
+      // );
+    }
+
     return Opacity(
       opacity: widget.tile.opacity,
-      child: (widget.tile.loadError && widget.errorImage != null)
-          ? Image(
-              image: widget.errorImage,
-              fit: BoxFit.fill,
-            )
-          : RawImage(
-              image: widget.tile.imageInfo?.image,
-              fit: BoxFit.fill,
-            ),
+      child: child,
     );
   }
 
