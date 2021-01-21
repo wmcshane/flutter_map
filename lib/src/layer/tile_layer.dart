@@ -1183,19 +1183,22 @@ class _AnimatedTileState extends State<AnimatedTile> {
 
   @override
   Widget build(BuildContext context) {
-    Widget child;
+    Widget child = RawImage(
+      image: null,
+      fit: BoxFit.fill,
+    );
 
-    if(widget.placeholderImage != null) {
-      child = Image(
-        image: widget.placeholderImage,
-        fit: BoxFit.fill,
-      );
-    } else {
-      child = RawImage(
-        image: null,
-        fit: BoxFit.fill,
-      );
-    }
+    // if(widget.placeholderImage != null) {
+    //   child = Image(
+    //     image: widget.placeholderImage,
+    //     fit: BoxFit.fill,
+    //   );
+    // } else {
+    //   child = RawImage(
+    //     image: null,
+    //     fit: BoxFit.fill,
+    //   );
+    // }
 
     if(widget.tile.loadError && widget.errorImage != null) {
       child = Image(
@@ -1205,18 +1208,18 @@ class _AnimatedTileState extends State<AnimatedTile> {
     }
 
     if(widget.tile.imageInfo?.image != null) {
-      child = RawImage(
-        image: widget.tile.imageInfo.image,
-        fit: BoxFit.fill,
-      );
-      // child = FadeInImage(
-      //   fadeInDuration: const Duration(milliseconds: 100),
-      //   placeholder: (widget.placeholderImage != null)
-      //       ? widget.placeholderImage
-      //       : MemoryImage(kTransparentImage),
-      //   image: widget.tile.imageProvider,
+      // child = RawImage(
+      //   image: widget.tile.imageInfo.image,
       //   fit: BoxFit.fill,
       // );
+      child = FadeInImage(
+        fadeInDuration: const Duration(milliseconds: 100),
+        placeholder: (widget.placeholderImage != null)
+            ? widget.placeholderImage
+            : MemoryImage(kTransparentImage),
+        image: widget.tile.imageProvider,
+        fit: BoxFit.fill,
+      );
     }
 
     return Opacity(
