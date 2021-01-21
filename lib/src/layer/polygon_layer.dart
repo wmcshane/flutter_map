@@ -130,7 +130,7 @@ class PolygonLayer extends StatelessWidget {
   }
 
   void _fillOffsets(final List<Offset> offsets, final List<LatLng> points) {
-    for (var i = 0, len = points.length; i < len; ++i) {
+    for (var i = 0; i < points.length; i++) {
       var point = points[i];
 
       var pos = map.project(point);
