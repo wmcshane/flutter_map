@@ -9,45 +9,55 @@ import 'package:latlong/latlong.dart' hide Path; // conflict with Path from UI
 class PolygonLayerOptions extends LayerOptions {
   final List<Polygon> polygons;
   final bool polygonCulling;
+  final bool innerRingSupport;
 
   /// screen space culling of polygons based on bounding box
   PolygonLayerOptions({
     Key key,
     this.polygons = const [],
     this.polygonCulling = false,
+    this.innerRingSupport = false,
     rebuild,
-  }) : super(key: key, rebuild: rebuild) {
-    if (polygonCulling) {
-      for (var polygon in polygons) {
-        polygon.boundingBox = LatLngBounds.fromPoints(polygon.points);
-      }
-    }
-  }
+  }) : super(key: key, rebuild: rebuild);
 }
 
 class Polygon {
   final List<LatLng> points;
   final List<Offset> offsets = [];
-  final List<List<LatLng>> holePointsList;
-  final List<List<Offset>> holeOffsetsList;
+  List<List<Offset>> rings;
+
   final Color color;
   final double borderStrokeWidth;
   final Color borderColor;
-  final bool disableHolesBorder;
   final bool isDotted;
   LatLngBounds boundingBox;
 
   Polygon({
     this.points,
-    this.holePointsList,
     this.color = const Color(0xFF00FF00),
     this.borderStrokeWidth = 0.0,
     this.borderColor = const Color(0xFFFFFF00),
-    this.disableHolesBorder = false,
     this.isDotted = false,
-  }) : holeOffsetsList = null == holePointsList || holePointsList.isEmpty
-            ? null
-            : List.generate(holePointsList.length, (_) => []);
+  }) {
+    boundingBox = LatLngBounds.fromPoints(points);
+
+    List<List<Offset>> rings = new List();
+    Offset ringStart = offsets[0];
+    int slidingWindow = 0;
+    for(int i = 1; i < offsets.length-1; i++){
+      Offset cur = offsets[i];
+      if(ringStart == cur){
+        //found the ring start, this is the end of the first polygon
+        rings.add(offsets.sublist(slidingWindow, i+1));
+        slidingWindow = i + 3;
+        if(slidingWindow < offsets.length-1) {
+          i = slidingWindow;
+          ringStart = offsets[slidingWindow];
+        }
+      }
+    }
+    this.rings = rings;
+  }
 }
 
 class PolygonLayerWidget extends StatelessWidget {
@@ -89,12 +99,6 @@ class PolygonLayer extends StatelessWidget {
         for (var polygon in polygonOpts.polygons) {
           polygon.offsets.clear();
 
-          if (null != polygon.holeOffsetsList) {
-            for (var offsets in polygon.holeOffsetsList) {
-              offsets.clear();
-            }
-          }
-
           if (polygonOpts.polygonCulling &&
               !polygon.boundingBox.isOverlapping(map.bounds)) {
             // skip this polygon as it's offscreen
@@ -102,13 +106,6 @@ class PolygonLayer extends StatelessWidget {
           }
 
           _fillOffsets(polygon.offsets, polygon.points);
-
-          if (null != polygon.holePointsList) {
-            for (var i = 0, len = polygon.holePointsList.length; i < len; ++i) {
-              _fillOffsets(
-                  polygon.holeOffsetsList[i], polygon.holePointsList[i]);
-            }
-          }
 
           polygons.add(
             CustomPaint(
@@ -166,24 +163,14 @@ class PolygonPainter extends CustomPainter {
 
       if (polygonOpt.isDotted) {
         var spacing = polygonOpt.borderStrokeWidth * 1.5;
-        _paintDottedLine(
-            canvas, polygonOpt.offsets, borderRadius, spacing, borderPaint);
-
-        if (!polygonOpt.disableHolesBorder &&
-            null != polygonOpt.holeOffsetsList) {
-          for (var offsets in polygonOpt.holeOffsetsList) {
-            _paintDottedLine(
-                canvas, offsets, borderRadius, spacing, borderPaint);
-          }
+        _paintDottedLine(canvas, polygonOpt.offsets, borderRadius, spacing, borderPaint);
+        for(var ring in polygonOpt.rings) {
+          _paintDottedLine(canvas, ring, borderRadius, spacing, borderPaint);
         }
       } else {
         _paintLine(canvas, polygonOpt.offsets, borderRadius, borderPaint);
-
-        if (!polygonOpt.disableHolesBorder &&
-            null != polygonOpt.holeOffsetsList) {
-          for (var offsets in polygonOpt.holeOffsetsList) {
-            _paintLine(canvas, offsets, borderRadius, borderPaint);
-          }
+        for(var ring in polygonOpt.rings) {
+          _paintLine(canvas, ring, borderRadius, borderPaint);
         }
       }
     }
@@ -222,39 +209,20 @@ class PolygonPainter extends CustomPainter {
   void _paintPolygon(Canvas canvas, Rect rect) {
     final paint = Paint();
 
-    if (null != polygonOpt.holeOffsetsList) {
-      canvas.saveLayer(rect, paint);
-      paint.style = PaintingStyle.fill;
+    canvas.clipRect(rect);
 
-      for (var offsets in polygonOpt.holeOffsetsList) {
-        var path = Path();
-        path.addPolygon(offsets, true);
-        canvas.drawPath(path, paint);
-      }
+    paint
+      ..style = PaintingStyle.fill
+      ..color = polygonOpt.color;
 
-      paint
-        ..color = polygonOpt.color
-        ..blendMode = BlendMode.srcOut;
-
-      var path = Path();
-      path.addPolygon(polygonOpt.offsets, true);
-      canvas.drawPath(path, paint);
-
-      _paintBorder(canvas);
-
-      canvas.restore();
-    } else {
-      canvas.clipRect(rect);
-      paint
-        ..style = PaintingStyle.fill
-        ..color = polygonOpt.color;
-
-      var path = Path();
-      path.addPolygon(polygonOpt.offsets, true);
-      canvas.drawPath(path, paint);
-
-      _paintBorder(canvas);
+    var path = Path();
+    // path.addPolygon(polygonOpt.offsets, true);
+    for(var ring in polygonOpt.rings) {
+      path.addPolygon(ring, true);
     }
+    canvas.drawPath(path, paint);
+
+    _paintBorder(canvas);
   }
 
   @override
