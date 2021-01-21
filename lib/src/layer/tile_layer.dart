@@ -1202,7 +1202,10 @@ class _AnimatedTileState extends State<AnimatedTile> {
       );
     }
 
-    return child;
+    return Opacity(
+      opacity: widget.tile.opacity,
+      child: child,
+    );
   }
 
   @override
