@@ -24,7 +24,7 @@ class PolygonLayerOptions extends LayerOptions {
 class Polygon {
   final List<LatLng> points;
   final List<Offset> offsets = [];
-  List<List<Offset>> rings;
+  List<List<Offset>> rings = [];
 
   final Color color;
   final double borderStrokeWidth;
@@ -40,7 +40,10 @@ class Polygon {
     this.isDotted = false,
   }) {
     boundingBox = LatLngBounds.fromPoints(points);
+  }
 
+  void buildRings() {
+    this.rings.clear();
     List<List<Offset>> rings = new List();
     Offset ringStart = offsets[0];
     int slidingWindow = 0;
@@ -106,6 +109,8 @@ class PolygonLayer extends StatelessWidget {
           }
 
           _fillOffsets(polygon.offsets, polygon.points);
+
+          polygon.buildRings();
 
           polygons.add(
             CustomPaint(
