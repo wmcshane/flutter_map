@@ -1183,25 +1183,21 @@ class _AnimatedTileState extends State<AnimatedTile> {
 
   @override
   Widget build(BuildContext context) {
-    Widget child = RawImage(
+    final child = (widget.tile.loadError && widget.errorImage != null) ? Image(
+      image: widget.errorImage,
+      fit: BoxFit.fill,
+    ) : RawImage(
       image: widget.tile.imageInfo?.image,
       fit: BoxFit.fill,
     );
 
-    if (widget.tile.loadError && widget.errorImage != null) {
-      child = Image(
-        image: widget.errorImage,
-        fit: BoxFit.fill,
-      );
-    }
-
-    Widget placeholderImage = Image(
+    final placeholderImage = Image(
       image: (widget.placeholderImage != null && !widget.tile.active) ? widget.placeholderImage : MemoryImage(kTransparentImage),
       fit: BoxFit.fill,
     );
 
     return Stack(
-      fit: StackFit.expand,
+      fit: StackFit.passthrough,
       children: [
         placeholderImage,
         Opacity(
